@@ -1,6 +1,8 @@
 import React from 'react';
 import MainGrid from '../src/components/MainGrid';
 import Box from '../src/components/Box';
+import nookies from 'nookies';
+import jwt from 'jsonwebtoken';
 
 import { AlurakutMenu, OrkutNostalgicIconSet, AlurakutProfileSidebarMenuDefault } from '../src/lib/AlurakutCommons';
 import { ProfileRelationsBoxWrapper } from '../src/components/ProfileRelations';
@@ -206,4 +208,35 @@ export default function Home(props) {
       </MainGrid>
     </>
   )
+}
+
+export async function getServerSideProps(context) {
+  const cookies = nookies.get(context);
+  const token = cookies.USER_TOKEN;
+  
+  const { isAuthenticated } = await fetch('https://alurakut.vercel.app/api/auth', {
+    headers: {
+      Authorization: token
+    }  
+  })
+  .then((resposta) => resposta.json())
+  
+  console.log('isAuthenticated', isAuthenticated);
+  
+  if(!isAuthenticated) {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      }
+    }
+  }
+  
+  const { githubUser } = jwt.decode(token);
+  
+  return {
+    props: {
+      githubUser
+    }
+  }
 }
